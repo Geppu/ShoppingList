@@ -22,11 +22,18 @@ class ViewController: UIViewController, UITableViewDataSource {
         super.viewDidLoad()
         //identify this class as the data source for the table
         myTableView.dataSource = self
-       let item1 = Item(name: "Milk")
-       let item2 = Item(name: "Eggs")
         
-        //fill empty array with items stored in dictionary "persistance". If there is nothing in the dictionary, add milk and eggs.
-        items = persistance.array(forKey: "persistanceArray") as? [Item] ?? [item1,item2]
+        //fill empty array with items stored in UserDefaults dictionary. First create a place "myArray" to put the encoded data stored with the key "persistanceArray"
+        if let myArray = UserDefaults.standard.data(forKey: "persistanceArray"){
+            //Now decode the JSON data as an array of objects I created from my class called "Item"
+            if let itemDecoded  = try?  JSONDecoder().decode([Item].self, from: myArray) as [Item] {
+                //Finally, assign the the global array "items" to the value of the decoded array stored in UserDefaults.
+               items = itemDecoded
+            }
+            else {
+                print ("Decoding Failed")
+            }
+        }
         
     }
 
@@ -55,7 +62,7 @@ class ViewController: UIViewController, UITableViewDataSource {
             //add the new item to the array "items"
             items.append(newItem)
             newItemTextfield.text = ""
-            //Check to see if the data can be encoded in the UserDefaults dictionary
+            //encode data in the UserDefaults dictionary
             if let encoded = try? JSONEncoder().encode(items){
             persistance.setValue(encoded, forKey: "persistanceArray")
             } else {
@@ -65,5 +72,18 @@ class ViewController: UIViewController, UITableViewDataSource {
             myTableView.reloadData()
         }
 }
+    //This "commit" built in method for UITableViewDataSource allows an item to be deleted from the table and removed from the array. It then saves the array into UserDefaults so the data will persist.
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+      if editingStyle == .delete {
+        self.items.remove(at: indexPath.row)
+        self.myTableView.deleteRows(at: [indexPath], with: .automatic)
+        //This part saves the array, now minus the deleted item, to UserDefaults
+        if let encoded = try? JSONEncoder().encode(items){
+        persistance.setValue(encoded, forKey: "persistanceArray")
+        } else {
+        print ("Encoding Failed")
+        }
+      }
+    }
 }
 
