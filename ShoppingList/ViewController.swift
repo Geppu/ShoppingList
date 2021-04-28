@@ -21,15 +21,15 @@ class ViewController: UIViewController, UITableViewDataSource {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        //identify this class as the data source for the table
+        //identify this class "ViewController" as the data source for the table
         myTableView.dataSource = self
         
         //Fill empty array with items stored in UserDefaults dictionary. First create a place "myArray" to put the encoded data that is stored with the key "persistanceArray".
         if let myArray = UserDefaults.standard.data(forKey: "persistanceArray"){
-            //Now decode the JSON data as an array of objects I created from my custom class called "Item"
+            //Now decode the JSON data as an array of objects from my custom class called "Item"
             if let itemDecoded  = try?  JSONDecoder().decode([Item].self, from: myArray) as [Item] {
-                //Finally, assign the the global array "items" to the value of the decoded array stored in UserDefaults.
-               items = itemDecoded
+            //Finally, assign the the global array "items" to the value of the decoded array stored in UserDefaults.
+            items = itemDecoded
             }
             else {
                 print ("Decoding Failed")
@@ -68,15 +68,12 @@ class ViewController: UIViewController, UITableViewDataSource {
             //add the new item to the array "items"
             items.append(newItem)
             }
+            //clear out the userEntered Data
             newItemTextfield.text = ""
             quantityTextField.text = ""
-            //encode and store data in the UserDefaults dictionary
-            if let encoded = try? JSONEncoder().encode(items){
-            persistance.setValue(encoded, forKey: "persistanceArray")
-            } else {
-            print ("Encoding Failed")
-            }
-            
+            //encode and store the data in UserDefaults
+            storeData()
+            //reload tableView to reflectd changes
             myTableView.reloadData()
         }
 
@@ -85,13 +82,26 @@ class ViewController: UIViewController, UITableViewDataSource {
       if editingStyle == .delete {
         self.items.remove(at: indexPath.row)
         self.myTableView.deleteRows(at: [indexPath], with: .automatic)
-        //This part saves the array, now minus the deleted item, to UserDefaults
+        //encode & save the array, now minus the deleted item, to UserDefaults
+       storeData()
+      }
+    }
+    
+    func storeData(){
+        //encode and store data in the UserDefaults dictionary
         if let encoded = try? JSONEncoder().encode(items){
         persistance.setValue(encoded, forKey: "persistanceArray")
         } else {
         print ("Encoding Failed")
         }
-      }
+    }
+    //push cell information into new view controller on segue
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let indexPath = myTableView.indexPathForSelectedRow {
+            let item = items[indexPath.row]
+            let vc = segue.destination as! DetailViewController
+            vc.item = item
+        }
     }
 }
 

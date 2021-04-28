@@ -9,17 +9,20 @@ class Item: Codable
     {
     var name: String
     var quantity: Int
+    
     init(name: String, quantity: Int)
     
     {
         self.name = name
         self.quantity = quantity
     }
+    
     //Make the data in this class "Item" codable in UserDefaults
     enum CodingKeys: String, CodingKey{
         case name
         case quantity
     }
+    
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         name = try container.decode(String.self, forKey: .name)
